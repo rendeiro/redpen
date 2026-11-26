@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Redpen test page</title>
+<style>
+  body { font: 16px/1.6 system-ui, sans-serif; max-width: 640px; margin: 0 auto; padding: 0 20px 900px; color: #111; }
+  header { position: sticky; top: 0; background: #f4f4f4; padding: 8px 12px; margin: 0 -12px; border-bottom: 1px solid #ddd; }
+  h2 { font-size: 14px; color: #666; margin: 28px 0 6px; }
+  #panel { height: 90px; overflow: auto; border: 1px solid #ccc; padding: 8px; }
+  #big { font-size: 34px; line-height: 1.3; }
+  #small { font-size: 11px; }
+  iframe { width: 100%; height: 80px; border: 1px solid #ccc; }
+  dialog { max-width: 360px; }
+  .cols { display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+<header>Sticky header. Serve this folder over http and use the extension, or add <code>?harness</code> to load the page script directly.</header>
+
+<h2>One line</h2>
+<p id="one">Maria Santos sent the invoice on Tuesday and asked for payment by the end of the month.</p>
+
+<h2>Wraps over several lines, with bold and a link</h2>
+<p id="multi">The quarterly report shows that <b>revenue grew by 42 percent</b> while costs stayed flat, according to <a href="#">the finance team at Example Corp</a>, which also said that the new contract with a client in Lisbon will start in January and run for three years.</p>
+
+<h2>Big and small text</h2>
+<p id="big">Launch day is 14 March</p>
+<p id="small">Account number 4471-0092-18, sort code 20-45-77, reference INV-2231.</p>
+
+<h2>Two columns on one line</h2>
+<p class="cols" id="cols"><span>Left column name</span><span>Right column amount</span></p>
+
+<h2>Scrolling panel</h2>
+<div id="panel">
+  <p>First line in the panel, visible at the start.</p>
+  <p id="inpanel">Private note: the door code is 7741 and the alarm is off.</p>
+  <p>Filler line three.</p><p>Filler line four.</p><p>Filler line five.</p><p>Filler line six.</p>
+</div>
+
+<h2>Same-origin iframe</h2>
+<iframe id="frame" src="frame.html"></iframe>
+
+<h2>Open shadow DOM</h2>
+<div id="shadowhost"></div>
+
+<h2>Modal dialog</h2>
+<button id="open">Open dialog</button>
+<dialog id="dlg">
+  <p id="indialog">Dialog text with a secret word: pineapple.</p>
+  <form method="dialog"><button>Close</button></form>
+</dialog>
+
+<h2>Text that gets replaced</h2>
+<p id="replace">This sentence is rebuilt when you press the button.</p>
+<button id="rebuild">Rebuild it</button>
+
+<script>
+  document.getElementById('shadowhost').attachShadow({ mode: 'open' }).innerHTML =
+    '<p id="inshadow">This paragraph lives inside a shadow root.</p>';
+  document.getElementById('open').onclick = () => document.getElementById('dlg').showModal();
+  document.getElementById('rebuild').onclick = () => {
+    const p = document.getElementById('replace');
+    p.innerHTML = p.textContent;
+  };
+  // Harness mode: run the page script without the extension.
+  if (location.search.includes('harness')) {
+    for (const src of ['../draw.js', '../content.js']) {
+      const s = document.createElement('script');
+      s.src = src;
+      s.async = false;
+      document.head.append(s);
+    }
+  }
+</script>
+</body>
+</html>
