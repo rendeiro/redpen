@@ -9,8 +9,7 @@
 
   const marks = []; // { type, color, range, seed, at, boxes }
   let tool = null; // the mark every new selection gets, or null when off
-  let pen = '#e5261f'; // underline and circle
-  let hl = '#ffe600'; // highlighter
+  const colors = { underline: '#e5261f', circle: '#e5261f', highlight: '#ffe600', blackout: '#000' };
   let host = null;
   let svg = null;
   let drawn = '';
@@ -297,13 +296,31 @@
   }
   for (const type of ['mousedown', 'mouseup', 'click']) addEventListener(type, onPointer, true);
 
-  // Marks the current selection with the armed tool.
+  // Removes every mark that touches the range. Returns how many went.
+  function erase(range) {
+    const before = marks.length;
+    for (let i = marks.length - 1; i >= 0; i--) {
+      const m = marks[i].range;
+      try {
+        // Selection starts before the mark ends, and ends after the mark starts.
+        if (range.compareBoundaryPoints(Range.END_TO_START, m) < 0 && range.compareBoundaryPoints(Range.START_TO_END, m) > 0) marks.splice(i, 1);
+      } catch {} // ranges in different documents or shadow roots never overlap
+    }
+    return before - marks.length;
+  }
+
+  // Marks the current selection with the armed tool, or clears it of marks.
   function apply() {
     if (!tool) return { ok: false, reason: 'off' };
     const range = selectionRange();
     if (!range) return { ok: false, reason: 'no-selection' };
-    const color = tool === 'blackout' ? '#000' : tool === 'highlight' ? hl : pen;
-    marks.push({ type: tool, color, range, seed: (Math.random() * 0x7fffffff) | 0, at: Date.now(), boxes: [] });
+    if (tool === 'erase') {
+      const removed = erase(range);
+      getSelection().removeAllRanges();
+      refresh();
+      return { ok: true, removed, count: marks.length };
+    }
+    marks.push({ type: tool, color: colors[tool], range, seed: (Math.random() * 0x7fffffff) | 0, at: Date.now(), boxes: [] });
     getSelection().removeAllRanges();
     refresh();
     return { ok: true, count: marks.length };
@@ -317,9 +334,8 @@
 
   function run(cmd, arg) {
     if (cmd === 'tool') {
-      tool = TYPES.includes(arg.tool) ? arg.tool : null;
-      if (arg.pen) pen = arg.pen;
-      if (arg.hl) hl = arg.hl;
+      tool = TYPES.includes(arg.tool) || arg.tool === 'erase' ? arg.tool : null;
+      for (const k of ['underline', 'circle', 'highlight']) if (arg[k]) colors[k] = arg[k];
       if (tool) apply(); // text already selected when the tool is picked
       return { ok: true, tool };
     }

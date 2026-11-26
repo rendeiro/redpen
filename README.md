@@ -9,15 +9,17 @@ A small Chrome extension for preparing screenshots. Select words on any page and
 
 ## Use
 
-1. Click the Redpen icon and pick a tool: **Underline**, **Circle**, **Highlight** or **Black out**.
+1. Click the Redpen icon and pick a tool: **Underline**, **Circle**, **Highlight**, **Black out** or **Clear selected**.
 2. Select text on the page. Every selection is marked with that tool, until you pick another tool or **Off**.
 
-The icon shows a letter (U, C, H or B) while a tool is on. A tool stays on for that tab until the page reloads.
+**Clear selected** works the other way round: select text and every mark touching it is removed.
 
-- Pen colour (underline and circle) and highlighter colour are chosen in the same popup and remembered. Red and yellow are the defaults.
+The icon shows a letter (U, C, H, B, or X for Clear selected) while a tool is on. A tool stays on for that tab until the page reloads.
+
+- Underline, circle and highlight each have their own colour, chosen in the same popup and remembered. The defaults are red, red and yellow.
 - Black out is always solid black.
 - Marks of different kinds and colours can share a page.
-- `Alt`+click a mark to remove it. **Undo last** and **Clear all** are in the popup.
+- `Alt`+click also removes a single mark. **Undo last** and **Clear all** are in the popup.
 - Marks follow the text when you scroll or resize. They are gone after a reload.
 
 Then take the screenshot the usual way (`Cmd+Shift+4` on a Mac).
@@ -39,7 +41,7 @@ The text itself is still in the page. So a blackout protects a screenshot, not a
 
 ## Privacy
 
-No access to any site until you click the icon on that tab. Only your two colour choices are stored, and nothing is sent anywhere.
+No access to any site until you click the icon on that tab. Only your colour choices are stored, and nothing is sent anywhere.
 
 ## Development
 

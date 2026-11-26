@@ -3,11 +3,12 @@
 
 const PENS = ['#e5261f', '#1d6ff2', '#12a150', '#f08c00', '#8b3fd9', '#111111'];
 const HIGHLIGHTERS = ['#ffe600', '#7dff6b', '#ff8ad8', '#6bd6ff', '#ffb347'];
-const LETTER = { underline: 'U', circle: 'C', highlight: 'H', blackout: 'B' };
+const LETTER = { underline: 'U', circle: 'C', highlight: 'H', blackout: 'B', erase: 'X' };
+const PALETTE = { underline: PENS, circle: PENS, highlight: HIGHLIGHTERS };
 
 const note = document.getElementById('note');
 let tabId;
-let state = { tool: null, pen: PENS[0], hl: HIGHLIGHTERS[0] };
+let state = { tool: null, underline: PENS[0], circle: PENS[0], highlight: HIGHLIGHTERS[0] };
 
 // Runs a command in the page: in every frame, or in the given ones.
 async function call(cmd, arg, frameIds) {
@@ -22,8 +23,8 @@ async function call(cmd, arg, frameIds) {
 
 function draw() {
   for (const b of document.querySelectorAll('.tool')) b.setAttribute('aria-pressed', (b.dataset.tool || null) === state.tool);
-  for (const [id, colors, key] of [['pen', PENS, 'pen'], ['hl', HIGHLIGHTERS, 'hl']]) {
-    const box = document.getElementById(id);
+  for (const [key, colors] of Object.entries(PALETTE)) {
+    const box = document.getElementById(key);
     box.replaceChildren(
       ...colors.map((c) => {
         const b = document.createElement('button');
@@ -36,12 +37,13 @@ function draw() {
       })
     );
   }
-  for (const p of document.querySelectorAll('.pen')) p.setAttribute('stroke', state.pen);
-  for (const r of document.querySelectorAll('.hl')) r.setAttribute('fill', state.hl);
+  document.querySelector('.c-underline').setAttribute('stroke', state.underline);
+  document.querySelector('.c-circle').setAttribute('stroke', state.circle);
+  document.querySelector('.c-highlight').setAttribute('fill', state.highlight);
 }
 
 async function badge() {
-  const color = state.tool === 'highlight' ? state.hl : state.tool === 'blackout' ? '#000000' : state.pen;
+  const color = state[state.tool] || (state.tool === 'erase' ? '#777777' : '#000000');
   await chrome.action.setBadgeBackgroundColor({ tabId, color });
   await chrome.action.setBadgeText({ tabId, text: LETTER[state.tool] || '' });
 }
@@ -82,7 +84,7 @@ document.getElementById('clear').onclick = async () => {
 (async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   tabId = tab.id;
-  Object.assign(state, await chrome.storage.local.get(['pen', 'hl']));
+  Object.assign(state, await chrome.storage.local.get(Object.keys(PALETTE)));
   draw();
   try {
     const files = ['draw.js', 'content.js'];

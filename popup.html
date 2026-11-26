@@ -31,15 +31,17 @@
 </head>
 <body>
   <section id="tools">
-    <button class="tool" data-tool="underline"><svg viewBox="0 0 34 16"><path class="pen" d="M3 11C10 9.5 22 12 31 10" fill="none" stroke-width="2.5" stroke-linecap="round"/></svg>Underline</button>
-    <button class="tool" data-tool="circle"><svg viewBox="0 0 34 16"><ellipse class="pen" cx="17" cy="8" rx="13" ry="6" fill="none" stroke-width="2.2"/></svg>Circle</button>
-    <button class="tool" data-tool="highlight"><svg viewBox="0 0 34 16"><rect class="hl" x="2" y="3" width="30" height="10" rx="2"/></svg>Highlight</button>
+    <button class="tool" data-tool="underline"><svg viewBox="0 0 34 16"><path class="c-underline" d="M3 11C10 9.5 22 12 31 10" fill="none" stroke-width="2.5" stroke-linecap="round"/></svg>Underline</button>
+    <button class="tool" data-tool="circle"><svg viewBox="0 0 34 16"><ellipse class="c-circle" cx="17" cy="8" rx="13" ry="6" fill="none" stroke-width="2.2"/></svg>Circle</button>
+    <button class="tool" data-tool="highlight"><svg viewBox="0 0 34 16"><rect class="c-highlight" x="2" y="3" width="30" height="10" rx="2"/></svg>Highlight</button>
     <button class="tool" data-tool="blackout"><svg viewBox="0 0 34 16"><rect x="2" y="3" width="30" height="10" rx="1.5" fill="#000" stroke="#888" stroke-width="0.5"/></svg>Black out</button>
+    <button class="tool" data-tool="erase"><svg viewBox="0 0 34 16"><path d="M11 3l12 10M23 3L11 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Clear selected</button>
     <button class="tool" data-tool=""><svg viewBox="0 0 34 16"></svg>Off</button>
   </section>
   <section>
-    <div class="row"><span>Pen</span><span class="swatches" id="pen"></span></div>
-    <div class="row"><span>Highlighter</span><span class="swatches" id="hl"></span></div>
+    <div class="row"><span>Underline</span><span class="swatches" id="underline"></span></div>
+    <div class="row"><span>Circle</span><span class="swatches" id="circle"></span></div>
+    <div class="row"><span>Highlight</span><span class="swatches" id="highlight"></span></div>
   </section>
   <section class="actions">
     <button id="undo">Undo last</button>
@@ -47,7 +49,7 @@
   </section>
   <section>
     <div id="note"></div>
-    <div class="muted">Pick a tool, then select text: each selection is marked. Alt+click a mark to remove it.</div>
+    <div class="muted">Pick a tool, then select text: each selection is marked. Clear selected removes the marks on what you select.</div>
   </section>
   <script src="popup.js"></script>
 </body>
