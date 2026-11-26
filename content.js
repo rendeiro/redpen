@@ -4,10 +4,13 @@
   if (globalThis.__redpen) return;
   const D = globalThis.RedpenDraw;
   const SVG = 'http://www.w3.org/2000/svg';
-  const TYPES = ['underline', 'circle', 'blackout'];
-  const PAD = 2; // extra black around blacked-out text
+  const TYPES = ['underline', 'circle', 'highlight', 'blackout'];
+  const PAD = 2; // extra cover around blacked-out or highlighted text
 
-  const marks = []; // { type, range, seed, at, boxes }
+  const marks = []; // { type, color, range, seed, at, boxes }
+  let tool = null; // the mark every new selection gets, or null when off
+  let pen = '#e5261f'; // underline and circle
+  let hl = '#ffe600'; // highlighter
   let host = null;
   let svg = null;
   let drawn = '';
@@ -184,11 +187,11 @@
     return node;
   }
 
-  function stroke(d, height) {
+  function stroke(d, height, color) {
     return el('path', {
       d,
       fill: 'none',
-      stroke: D.RED,
+      stroke: color,
       'stroke-width': D.strokeWidth(height),
       'stroke-linecap': 'round',
       'stroke-linejoin': 'round',
@@ -202,33 +205,34 @@
     }
     for (const m of marks) m.boxes = boxesOf(m.range);
 
-    const state = JSON.stringify(marks.map((m) => [m.type, m.seed, m.boxes.map((b) => [b.left, b.top, b.right, b.bottom])]));
+    const state = JSON.stringify(marks.map((m) => [m.type, m.color, m.seed, m.boxes.map((b) => [b.left, b.top, b.right, b.bottom])]));
     if (state === drawn) return;
     drawn = state;
 
     const nodes = [];
-    // Black first, so red marks stay visible on top of it.
+    const cover = (b, attrs) =>
+      el('rect', {
+        x: b.left - PAD,
+        y: b.top - PAD,
+        width: b.right - b.left + PAD * 2,
+        height: b.bottom - b.top + PAD * 2,
+        ...attrs,
+      });
+    // Highlighter at the bottom, then solid black, then pen strokes on top.
+    for (const m of marks) {
+      if (m.type !== 'highlight') continue;
+      for (const b of m.boxes) nodes.push(cover(b, { rx: 3, fill: m.color, 'fill-opacity': 0.4, 'data-kind': 'highlight' }));
+    }
     for (const m of marks) {
       if (m.type !== 'blackout') continue;
-      for (const b of m.boxes) {
-        nodes.push(
-          el('rect', {
-            x: b.left - PAD,
-            y: b.top - PAD,
-            width: b.right - b.left + PAD * 2,
-            height: b.bottom - b.top + PAD * 2,
-            rx: 1.5,
-            fill: '#000',
-          })
-        );
-      }
+      for (const b of m.boxes) nodes.push(cover(b, { rx: 1.5, fill: '#000', 'data-kind': 'blackout' }));
     }
     for (const m of marks) {
       if (m.type === 'underline') {
-        m.boxes.forEach((b, i) => nodes.push(stroke(D.underlinePath(b, m.seed + i), b.bottom - b.top)));
+        m.boxes.forEach((b, i) => nodes.push(stroke(D.underlinePath(b, m.seed + i), b.bottom - b.top, m.color)));
       } else if (m.type === 'circle' && m.boxes.length) {
         const lineHeight = Math.max(...m.boxes.map((b) => b.bottom - b.top));
-        nodes.push(stroke(D.circlePath(D.union(m.boxes), m.seed), lineHeight));
+        nodes.push(stroke(D.circlePath(D.union(m.boxes), m.seed), lineHeight, m.color));
       }
     }
     svg.replaceChildren(...nodes);
@@ -274,13 +278,13 @@
     for (let i = marks.length - 1; i >= 0; i--) {
       const m = marks[i];
       const boxes = m.type === 'circle' && m.boxes.length ? [D.union(m.boxes)] : m.boxes;
-      const reach = m.type === 'blackout' ? PAD : 6;
+      const reach = m.type === 'blackout' || m.type === 'highlight' ? PAD : 6;
       if (boxes.some((b) => x >= b.left - reach && x <= b.right + reach && y >= b.top - reach && y <= b.bottom + reach)) return i;
     }
     return -1;
   }
 
-  // Alt+click removes a mark. Alt+Shift+click changes its type.
+  // Alt+click removes a mark.
   function onPointer(e) {
     if (!e.altKey || e.button !== 0 || !marks.length) return;
     const i = markAt(e.clientX, e.clientY);
@@ -288,30 +292,44 @@
     e.preventDefault();
     e.stopImmediatePropagation();
     if (e.type !== 'click') return;
-    if (e.shiftKey) marks[i].type = TYPES[(TYPES.indexOf(marks[i].type) + 1) % TYPES.length];
-    else marks.splice(i, 1);
+    marks.splice(i, 1);
     refresh();
   }
   for (const type of ['mousedown', 'mouseup', 'click']) addEventListener(type, onPointer, true);
 
-  function run(cmd) {
-    if (TYPES.includes(cmd)) {
-      const range = selectionRange();
-      if (!range) return { ok: false, reason: 'no-selection' };
-      marks.push({ type: cmd, range, seed: (Math.random() * 0x7fffffff) | 0, at: Date.now(), boxes: [] });
-      getSelection().removeAllRanges();
-    } else if (cmd === 'undo') {
+  // Marks the current selection with the armed tool.
+  function apply() {
+    if (!tool) return { ok: false, reason: 'off' };
+    const range = selectionRange();
+    if (!range) return { ok: false, reason: 'no-selection' };
+    const color = tool === 'blackout' ? '#000' : tool === 'highlight' ? hl : pen;
+    marks.push({ type: tool, color, range, seed: (Math.random() * 0x7fffffff) | 0, at: Date.now(), boxes: [] });
+    getSelection().removeAllRanges();
+    refresh();
+    return { ok: true, count: marks.length };
+  }
+
+  // While a tool is armed, finishing a selection with the mouse marks it.
+  // The short wait lets the browser settle the selection first.
+  addEventListener('mouseup', (e) => {
+    if (tool && e.button === 0 && !e.altKey) setTimeout(apply, 0);
+  }, true);
+
+  function run(cmd, arg) {
+    if (cmd === 'tool') {
+      tool = TYPES.includes(arg.tool) ? arg.tool : null;
+      if (arg.pen) pen = arg.pen;
+      if (arg.hl) hl = arg.hl;
+      if (tool) apply(); // text already selected when the tool is picked
+      return { ok: true, tool };
+    }
+    if (cmd === 'probe') return { tool, count: marks.length, last: marks.length ? marks[marks.length - 1].at : 0 };
+    if (cmd === 'apply') return apply();
+    if (cmd === 'undo') {
       if (!marks.length) return { ok: false, reason: 'nothing-to-undo' };
       marks.pop();
     } else if (cmd === 'clear') {
       marks.length = 0;
-    } else if (cmd === 'probe') {
-      const active = document.activeElement;
-      return {
-        selection: !!selectionRange(),
-        focused: document.hasFocus() && !(active && /^I?FRAME$/.test(active.tagName)),
-        last: marks.length ? marks[marks.length - 1].at : 0,
-      };
     } else {
       return { ok: false, reason: 'unknown-command' };
     }

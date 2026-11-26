@@ -9,20 +9,15 @@ A small Chrome extension for preparing screenshots. Select words on any page and
 
 ## Use
 
-Select some text, then:
+1. Click the Redpen icon and pick a tool: **Underline**, **Circle**, **Highlight** or **Black out**.
+2. Select text on the page. Every selection is marked with that tool, until you pick another tool or **Off**.
 
-| Action | Shortcut |
-|---|---|
-| Underline in red | `Alt+Shift+U` |
-| Circle in red | `Alt+Shift+C` |
-| Black out | `Alt+Shift+B` |
-| Undo the latest mark | `Alt+Shift+Z` |
+The icon shows a letter (U, C, H or B) while a tool is on. A tool stays on for that tab until the page reloads.
 
-The same actions, plus **Clear all marks**, are in the right-click menu and behind the toolbar icon. Shortcuts can be changed at `chrome://extensions/shortcuts`.
-
-- Add as many marks as you like, of any mix. Select, mark, select the next bit, mark again.
-- `Alt`+click a mark to remove it.
-- `Alt+Shift`+click a mark to change its type: underline, circle, blackout.
+- Pen colour (underline and circle) and highlighter colour are chosen in the same popup and remembered. Red and yellow are the defaults.
+- Black out is always solid black.
+- Marks of different kinds and colours can share a page.
+- `Alt`+click a mark to remove it. **Undo last** and **Clear all** are in the popup.
 - Marks follow the text when you scroll or resize. They are gone after a reload.
 
 Then take the screenshot the usual way (`Cmd+Shift+4` on a Mac).
@@ -35,6 +30,7 @@ The text itself is still in the page. So a blackout protects a screenshot, not a
 
 ## Limits
 
+- Marks are made by selecting with the mouse, not the keyboard.
 - Works on selectable text. Not on images, canvas apps such as Google Docs, or text typed into input boxes.
 - Text inside a frame from another site may be out of reach.
 - If a site rebuilds the text you marked, the mark is dropped. Mark it again.
@@ -43,11 +39,11 @@ The text itself is still in the page. So a blackout protects a screenshot, not a
 
 ## Privacy
 
-No access to any site until you use a shortcut, the menu or the icon on that tab. Nothing is stored and nothing is sent anywhere.
+No access to any site until you click the icon on that tab. Only your two colour choices are stored, and nothing is sent anywhere.
 
 ## Development
 
-No build step. `draw.js` holds the geometry and the hand-drawn paths, `content.js` runs in the page, `background.js` connects the shortcuts and menus to it.
+No build step. `draw.js` holds the geometry and the hand-drawn paths, `content.js` runs in the page, `popup.js` arms a tool on the current tab.
 
 ```bash
 node --test

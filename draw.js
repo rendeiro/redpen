@@ -1,8 +1,6 @@
 // Pure geometry and path helpers. No DOM here, so node can test them.
 // A box is { left, top, right, bottom } in viewport pixels.
 (function (root) {
-  const RED = '#e5261f';
-
   // Small seeded random generator (mulberry32). Same seed, same shape.
   function rng(seed) {
     let a = seed >>> 0;
@@ -137,7 +135,7 @@
     return smooth(pts);
   }
 
-  const api = { RED, rng, intersect, union, mergeByLine, smooth, strokeWidth, underlinePath, circlePath };
+  const api = { rng, intersect, union, mergeByLine, smooth, strokeWidth, underlinePath, circlePath };
   root.RedpenDraw = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
