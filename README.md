@@ -4,8 +4,9 @@ A small Chrome extension for preparing screenshots. Select words on any page and
 
 ## Install
 
-1. Open `chrome://extensions` and turn on **Developer mode**.
-2. Click **Load unpacked** and pick this folder.
+1. Open the [latest release](../../releases/latest) and download `redpen.zip`. Unzip it. You get a folder called `redpen`. Keep it somewhere permanent, not in Downloads: Chrome loads it from disk every time.
+2. Open `chrome://extensions` and turn on **Developer mode**.
+3. Click **Load unpacked** and pick the `redpen` folder.
 
 ## Use
 
