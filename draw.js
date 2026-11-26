@@ -116,8 +116,8 @@
     const h = box.bottom - box.top;
     const cx = (box.left + box.right) / 2;
     const cy = (box.top + box.bottom) / 2;
-    const rx = w / 2 + Math.max(7, h * 0.45);
-    const ry = h / 2 + Math.max(4, h * 0.3);
+    const rx = w / 2 + Math.max(5, h * 0.2);
+    const ry = h / 2 + Math.max(3, h * 0.16);
     const power = 2 / 2.6;
     const steps = 30;
     const start = Math.PI * (0.95 + r() * 0.2);

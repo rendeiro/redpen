@@ -109,6 +109,43 @@
     return r;
   }
 
+  // The sticky or fixed element (a pinned header, say) that covers the text of
+  // `el` at a point, or null. Only solid ones count: when unsure the mark stays,
+  // so a blackout never disappears while its text can still be read.
+  function coverAt(x, y, el) {
+    const hit = document.elementFromPoint(x, y);
+    if (!hit || el.contains(hit)) return null;
+    for (let n = el; n; n = n.parentNode || n.host) if (n === hit) return null;
+    let solid = false;
+    for (let n = hit; n && n.nodeType === Node.ELEMENT_NODE; n = n.parentElement) {
+      const cs = getComputedStyle(n);
+      if (!solid) solid = /^rgb\(|, 1\)$/.test(cs.backgroundColor);
+      if (cs.position === 'fixed' || cs.position === 'sticky') return solid ? n : null;
+    }
+    return null;
+  }
+
+  // The cover's rect, if it really lies over the point (a dialog's backdrop
+  // does not) and is as wide as the box; a narrow one would leave the ends readable.
+  function coverRect(x, y, el, box) {
+    const cover = coverAt(x, y, el);
+    if (!cover) return null;
+    const r = cover.getBoundingClientRect();
+    return r.top <= y && r.bottom >= y && r.left <= box.left && r.right >= box.right ? r : null;
+  }
+
+  // Cuts off the part of a box that has slid under a pinned header or footer.
+  function uncovered(box, el) {
+    const x = (box.left + box.right) / 2;
+    let b = box;
+    const above = coverRect(x, b.top + 1, el, b);
+    if (above) b = { ...b, top: Math.max(b.top, above.bottom) };
+    if (b.bottom - b.top <= 0.5) return null;
+    const below = coverRect(x, b.bottom - 1, el, b);
+    if (below) b = { ...b, bottom: Math.min(b.bottom, below.top) };
+    return b.bottom - b.top > 0.5 ? b : null;
+  }
+
   // One box per line of marked text, in viewport pixels. Reads each text node
   // on its own: a range over whole elements would return their full boxes.
   function boxesOf(range) {
@@ -119,7 +156,8 @@
       r.setStart(node, start);
       r.setEnd(node, end);
       for (const rect of r.getClientRects()) {
-        const c = clip(rect, node.parentElement);
+        let c = clip(rect, node.parentElement);
+        if (c) c = uncovered(c, node.parentElement);
         if (c) rects.push(c);
       }
     };
